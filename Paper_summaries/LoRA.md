@@ -24,7 +24,7 @@ NLP에서 주로 대규모 pretrained language model을 여러 downstream applic
 우리는 학습된 over-parametrized model이 실제로 낮은 intrinsic demension에 존재한다는 다른 연구 결과를 바탕으로 model adaptation 중 weight의 변화에도 낮은 intrinsic rank가 존재한다고 가정하여 이를 바탕으로 LoRA를 도출하였다. 이때 intrinsic dimension은 어떤 task를 해결하기 위해 실질적으로 필요한 독립적인 parameter 수이다.
 
 LoRA는 pre-trained weight는 고정하고 adaptation중 dense layer(linear layer)의 변화에 대한 rank decomposition matrix를 대신 최적화 하여 nn의 일부 dense layer를 간접적으로 training한다.
-![](Pasted%20image%2020260906082518.png)
+![](../assets/Pasted%20image%2020260906082518.png)
 
 LoRA의 장점은 다음과 같다
 
@@ -60,15 +60,26 @@ $\Phi = \{W_1, W_2, W_3, \ldots\}$로 parametreized 된 pre-trained autoregressi
 여기서는 pre-trained weight $\Phi_0$로 초기화한 후, conditional language modeling objective ($PΦ​(y∣x)$)를 최대화하도록 gradient 계산을 하며 $Φ_0 + ΔΦ$로 업데이트한다.
 
 $$
-\max_{\Phi} \sum_{(x,y)\in\mathcal{Z}} \sum_{t=1}^{|y|} \log\left(P_{\Phi}(y_t \mid x, y_{<t})\right)
+\max_{\Phi}
+\sum_{(x,y)\in\mathcal{Z}}
+\sum_{t=1}^{|y|}
+\log\left(
+P_{\Phi}(y_t \mid x, y_{<t})
+\right)
 $$
 
 주요한 단점중 하나는 각 downstream task마다 서로 다른 집합 $∆Φ$를 학습하는 것이고 dimension이 parameter만큼 크다. 모델이 큰 경우에 독립적인 instance를 여러개 저장하고 배포하는데 어려움이 있다.
 
 논문에서 $\Delta \Phi = \Delta \Phi(\Theta)$가 $|\Theta| \ll |\Phi_0|$을 만족하는 작은 parameter 집합 $Θ$로 다시 parameterization한다. 즉 $Θ$를 encoding한다.
 
-$$  
-\max_{\Theta}\sum_{(x,y)\in\mathcal{Z}}\sum_{t=1}^{|y|}\log\left(p_{\Phi_0+\Delta\Phi(\Theta)}\left(y_t \mid x, y_{<t}\right)\right)  
+$$
+\max_{\Theta}
+\sum_{(x,y)\in\mathcal{Z}}
+\sum_{t=1}^{|y|}
+\log\left(
+p_{\Phi_0+\Delta\Phi(\Theta)}
+\left(y_t \mid x, y_{<t}\right)
+\right)
 $$
 
 GPT-3의 경우 trainable parameters의 수는 0.01%만큼 작을 수 있다.
@@ -101,7 +112,7 @@ Attention(Q,K^′,V^′)
 $$
 
 prefix tuning은 model을 최적화 하기 어렵고 trainable parameters수가 증가한다고 성능이 좋아지지 않는다. 또한 사용가능한 sequence length가 줄어든다.
-![](Pasted%20image%2020260906082543.png)
+![](../assets/Pasted%20image%2020260906082543.png)
 # Method
 
 ## Low-Rank-Parametrized update matrices
@@ -125,7 +136,7 @@ production  $W_0$와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 �
 
 기존연구에 사용된 설정을 재현한다.  
 간단한 변형으로 finetuning의 일부 layer만 update하고 나머지는 freezing할 수 있는데 GPT-2에서 마지막 두 layer만 adaptation하는 기존 연구 설정을 포함하였다.
-![](Pasted%20image%2020260906082555.png)
+![](../assets/Pasted%20image%2020260906082555.png)
 ## RoBerta Base/Large
 
 RoBerta는 BERT에서 처음 제안된 pre-training recipe을 최적화하여 BERT task 성능을 향상한 모델로 여전히 널리 사용되는 pre-trained model이다. 
