@@ -1,3 +1,10 @@
+---
+title: Attention is all you need
+field: AI
+category: NLP
+status: First Pass
+---
+
 # Abstract
 
 sequence transduction 모델 : RNN,CNN 주로 사용

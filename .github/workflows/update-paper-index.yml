@@ -1,0 +1,46 @@
+name: Update Paper Index
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Paper_summaries/**/*.md"
+      - "!Paper_summaries/README.md"
+      - "scripts/update_paper_index.py"
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Generate paper index
+        run: python scripts/update_paper_index.py
+
+      - name: Commit README
+        run: |
+          if git diff --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add Paper_summaries/README.md
+          git commit -m "docs: update paper index"
+          git push

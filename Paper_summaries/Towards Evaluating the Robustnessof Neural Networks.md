@@ -1,3 +1,10 @@
+---
+title: Towards Evaluating the Robustnessof Neural Networks
+field: AI_Security
+category: Adversarial ML
+status: First Pass
+---
+
 # Abstract
 
 nn은 대부분의 머신러닝 task에서 SOTA를 제공하지만 adversarial examples에 취약하다. 이 때문에 security-critical 영역에서 nn의 적용이 어렵다.

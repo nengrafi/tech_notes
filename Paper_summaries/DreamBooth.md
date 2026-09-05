@@ -1,3 +1,10 @@
+---
+title: "DreamBooth: Fine Tuning Text‑to‑Image Diffusion Models for Subject‑Driven Generation"
+field: AI
+category: Generative Model
+status: First Pass
+---
+
 # Abstract
 
 기존의 text-to-image model은 subject를 유지하며 서로 다른 context에서 새로운 표현을 synthesis하는 능력이 부족했다. 따라서 이 논문은 DM을 personalization 하기 위한 새로운 접근법을 제시한다. 이때 pretrained model에 몇장의 이미지를 입력으로 줘서 fine-tuning하여 고유 identifier와 object를 연결한다.

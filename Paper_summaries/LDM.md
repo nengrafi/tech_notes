@@ -1,3 +1,10 @@
+---
+title: High‑Resolution Image Synthesis with Latent Diffusion Models
+field: AI
+category: Generative Model
+status: First Pass
+---
+
 # Abstract
 
 기존에 DMs는 DAE (노이즈를 넣어서 생성)를 순차적으로 여러번 사용하여 retraining 없이 이미지 생성 과정을 제어한다. 이때 DMs는 denosing step에서 어떤 방향으로 갈지 guidance를 제시할 수 있기 때문에 retrain할 필요가 없다. 기존의 model은 pixel space (3x512x512)에서 동작하므로 최적화를 위해서는 GPU와 inference 비용이 크다. 본 연구는 pretrained된 autoencoder(입력 → 압축 → 복원)의 latent space에서 DMs를 적용한다. 이를 통해 너무 많은 detail을 버리지 않으면서 계산 복잡도가 감소하였고 그 결과 더 좋은 visual fidelity를 얻을 수 있었다. 또한 cross-attention layer를 도입함으로서conditional generator로 변환하고 또한 convolutional 방식에서 고해상도 합성을 가능하게 한다 (해상도가 달라도 같은 weight 사용가능) . 이 연구에서 LDMs는 image inpainting, class-conditional image synthesis에서 최고 성능을 달성했다. 또한 piexel 기반 DMs에 비해서 자원 요구량을 크게 줄인다.

@@ -1,3 +1,10 @@
+---
+title: "LoRA: Low-Rank Adaptation of Large Language Models"
+field: AI
+category: Efficient Learning
+status: reading
+---
+
 # Abstract
 
 자연어 처리 중요 패러다임

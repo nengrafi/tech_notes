@@ -1,3 +1,10 @@
+---
+title: "SDXL: Improving Latent Diffusion Models for High‑Resolution Image Synthesis"
+field: AI
+category: Generative Model
+status: First Pass
+---
+
 # Abstract
 
 이 논문에서는 text-to-image 합성을 위한 laten diffusion model SDXL을 제시한다.

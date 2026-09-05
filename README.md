@@ -1,9 +1,8 @@
-# Paper Summaries
-
-이 directory는 제가 읽은 papers를 요약합니다.
+공부 내용을 정리하는 repository입니다.
 
 ---
-## AI Papers
+## 카테고리
 
-
-
+- [Academic](./Academic/README.md)
+- [Paper Summaries](./Paper_summaries/README.md)
+- [Game Development](./Game_development/README.md)

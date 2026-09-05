@@ -1,3 +1,10 @@
+---
+title: "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+field: AI
+category: NLP
+status: reading
+---
+
 ## Abstract
 
 BERT는 pre-trained 단계에서 bidirectional train을 unlabeled 방식으로 한다. 이후에 fine-tuning 단계에서는 단순히 output layer를 하나 추가하여서 다양한 일을 수행할 수 있는 모델을 만든다.
