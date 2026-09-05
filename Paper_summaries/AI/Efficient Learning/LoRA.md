@@ -104,13 +104,13 @@ prefix tuning은 model을 최적화 하기 어렵고 trainable parameters수가 
 
 dense layers의 weight는 일반적으로 full-rank이다. 하지만 특정 task에서 더 낮은 instrisic dimension을 가지고 더 작은 subspace으로의 random projection으로 효율적인 학습이 가능하다는 연구 결과가 있었다. 이에 따라 adaptation중 weight에 대한 update 역시 낮은 intrinsic rank를 가진다고 가정하자. $𝑊_0 ∈ ℝ_{𝑑×k}$에 대해서 update를 low-rank decomposition $𝑊_0 + Δ𝑊 = 𝑊_0 + 𝐵A$로 표현한다. 이때 $𝐵 ∈ ℝ_{𝑑×r},𝐴 ∈ ℝ_{𝑟×k}$이고 rank는 $𝑟 ≪ min(𝑑, 𝑘)$이다.(선형변환의 관점에서 보았을때 k→d이기 때문이다.) training 중에 $W_0$는 frozen되며 $A,B$가 train된다.
 
-이때 $A$는 random Gaussian initialization을 사용하고 $B=0$으로 설정한다. 따라서 초반 변화량은 0이고 이후 $∆W x$를 $\frac{\alpha}{r}$만큼 scaling한다. 이때 rank가 커질수록 $d×r$rank 1의 합 개수가 커지면서 원소의 magnitude가 커질 수 있으므로 r을 나눠준다. $\alpha$는 hyperparameter이다. initialization scale(A의 표준편차를 적절히 $\frac{\alpha}{r}$와 균형있게 설정) 하면 learning rate와 효과가 겹치기 때문에 논문에서는 고정하고 다른 hyperparameter를 tuning한다.
+이때 $A$는 random Gaussian initialization을 사용하고 $B=0$으로 설정한다. 따라서 초반 변화량은 0이고 이후 $∆W x$를 $\frac{\alpha}{r}$만큼 scaling한다. 이때 rank가 커질수록 $d×r$ rank 1의 합 개수가 커지면서 원소의 magnitude가 커질 수 있으므로 r을 나눠준다. $\alpha$는 hyperparameter이다. initialization scale(A의 표준편차를 적절히 $\frac{\alpha}{r}$와 균형있게 설정) 하면 learning rate와 효과가 겹치기 때문에 논문에서는 고정하고 다른 hyperparameter를 tuning한다.
 
 **A Generalization of Full Fine-tuning**  
 일반적인 fine-tuning에서는 pre-trained parameter의 일부를 선택 training할 수 있다.
 
 **No Additional Inference Latency. production  
-$W_0$**와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downstream task로 전환할때 $BA$를 빼고 다른 $𝐵^′𝐴^′$를 더하여 새로운 $W_0$를 복원한다. 이는 memory overhead가 거의 없는 빠른 operation이며 이를통해 full-fine-tuned model과 비교하였을때 추론중에추가적인 latency가 발생하지 않는다.
+$W_0$**와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downstream task로 전환 할 때 $BA$를 빼고 다른 $𝐵^′𝐴^′$를 더하여 새로운 $W_0$를 복원한다. 이는 memory overhead가 거의 없는 빠른 operation이며 이를 통해 full-fine-tuned model과 비교하였을 때 추론 중에 추가적인 latency가 발생하지 않는다.
 
 ## Applying LoRA to Transformer
 
