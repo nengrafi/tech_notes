@@ -64,7 +64,7 @@ $$
 \sum_{(x,y)\in\mathcal{Z}}
 \sum_{t=1}^{|y|}
 \log\left(
-P_{\Phi}(y_t \mid x, y_{<t})
+P_{\Phi}(y_t \mid x, y_{\lt t})
 \right)
 $$
 
@@ -78,7 +78,7 @@ $$
 \sum_{t=1}^{|y|}
 \log\left(
 p_{\Phi_0+\Delta\Phi(\Theta)}
-\left(y_t \mid x, y_{<t}\right)
+\left(y_t \mid x, y_{\lt t}\right)
 \right)
 $$
 
