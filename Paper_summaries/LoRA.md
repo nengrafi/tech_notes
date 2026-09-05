@@ -114,18 +114,13 @@ dense layers의 weight는 일반적으로 full-rank이다. 하지만 특정 task
 이때 $A$는 random Gaussian initialization을 사용하고 $B=0$으로 설정한다. 따라서 초반 변화량은 0이고 이후 $∆W x$를 $\frac{\alpha}{r}$만큼 scaling한다. 이때 rank가 커질수록 $d×r$ rank 1의 합 개수가 커지면서 원소의 magnitude가 커질 수 있으므로 r을 나눠준다. $\alpha$는 hyperparameter이다. initialization scale(A의 표준편차를 적절히 $\frac{\alpha}{r}$와 균형있게 설정) 하면 learning rate와 효과가 겹치기 때문에 논문에서는 고정하고 다른 hyperparameter를 tuning한다.
 
 **A Generalization of Full Fine-tuning**  
-일반적인 fine-tuning에서는 pre-trained parameter의 일부를 선택 training할 수 있다.
+일반적인 fine-tuning에서는 pre-trained parameter의 일부를 선택 training할 수 있다. LoRA는 거기서 더욱 나아가 adaptation 중에 $∆W$가 full-rank(min(d,k))일 필요없다. 따라서 rank를 pre-trained weight matrices와 같게 설정할 경우 full-fine-tuning과 동일한 표현력을 얻는다. 즉 trainable parameters의 수를 늘리면 full-fine-tuning에 수렴해간다. 이때 adapter-based methods는 MLP로 prefix-based methods는 긴 input sequences를 처리할 수 없는 모델로 수렴한다.
 
-**No Additional Inference Latency. production  
-$W_0$**와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downstream task로 전환 할 때 $BA$를 빼고 다른 $𝐵^′𝐴^′$를 더하여 새로운 $W_0$를 복원한다. 이는 memory overhead가 거의 없는 빠른 operation이며 이를 통해 full-fine-tuned model과 비교하였을 때 추론 중에 추가적인 latency가 발생하지 않는다.
-
+**No Additional Inference Latency.** 
+production  $W_0$와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downstream task로 전환 할 때 $BA$를 빼고 다른 $𝐵^′𝐴^′$를 더하여 새로운 $W_0$를 복원한다. 이는 memory overhead가 거의 없는 빠른 operation이며 이를 통해 full-fine-tuned model과 비교하였을 때 추론 중에 추가적인 latency가 발생하지 않는다.
 ## Applying LoRA to Transformer
 
-일반적으로 nn은 모든 weight matrices의 일부에 LoRA를 적용하여 trainable parameters의 수를 줄일 수 있다. attention에는 4개의 weight $(𝑊_𝑞  
-, 𝑊_𝑘  
-, 𝑊_𝑣  
-, 𝑊_𝑜  
-)$가 있고 MLP에는 2개가 있다.
+일반적으로 nn은 모든 weight matrices의 일부에 LoRA를 적용하여 trainable parameters의 수를 줄일 수 있다. attention에는 4개의 weight $(𝑊_𝑞  , 𝑊_𝑘  , 𝑊_𝑣  , 𝑊_𝑜  )$가 있고 MLP에는 2개가 있다.
 
 # Empirical Experiments
 
@@ -137,6 +132,8 @@ $W_0$**와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downs
 ![[Pasted image 20260906023938.png]]
 
 ## RoBerta Base/Large
+
+RoBerta는 BERT에서 처음 제안된 pre-training recipe을 최적화하여 BERT task 성능을 향상한 모델로 여전히 널리 사용되는 pre-trained model이다. 
 
 ## Deberta XXL
 
@@ -155,3 +152,11 @@ $W_0$**와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downs
 ## How does the Adaptation Matrix $ΔW$ Compare to $W$?
 
 # Conclusion and future work
+
+거대한 language model을 fine-tuning하는데 필요한 hardware와 서로 다른 task를 위한 독립적인 instance를 hosting할때 발생하는 storage/switching cost 측면에서 감당하기 어려울 정도로 큰 비용이 든다. 이때 논문에서는 높은 model quality를 유지하며 inference latency를 발생시키지 않고 input sequence length도 줄이지 않는 효율적인 adaptation strategy인 LoRA를 제안한다. model parameter 대부분을 공유하므로 서비스시에 빠르게 task를 전환할 수 있고 dense layer를 포함하는 모든 nn에 일반적으로 적용할 수 있다.
+
+향후 연구
+1. 다른 효율적인 adaptation method와 결합을 위해 독립적인 improvement 제공 가능성
+2. LoRA의 mechanism 명확화
+3. weight matrix를 선택할때 heuristic에 의존하는데 다른 원칙적인 방법 고안
+4. $∆W$의 rank-deficiency가 $W$ 역시 rank-deficient임을 시사함
