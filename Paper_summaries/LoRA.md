@@ -128,8 +128,13 @@ dense layers의 weight는 일반적으로 full-rank이다. 하지만 특정 task
 production  $W_0$와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 다른 downstream task로 전환 할 때 $BA$를 빼고 다른 $𝐵^′𝐴^′$를 더하여 새로운 $W_0$를 복원한다. 이는 memory overhead가 거의 없는 빠른 operation이며 이를 통해 full-fine-tuned model과 비교하였을 때 추론 중에 추가적인 latency가 발생하지 않는다.
 ## Applying LoRA to Transformer
 
-일반적으로 nn은 모든 weight matrices의 일부에 LoRA를 적용하여 trainable parameters의 수를 줄일 수 있다. attention에는 4개의 weight $(𝑊_𝑞  , 𝑊_𝑘  , 𝑊_𝑣  , 𝑊_𝑜  )$가 있고 MLP에는 2개가 있다.
+일반적으로 nn은 모든 weight matrices의 일부에 LoRA를 적용하여 trainable parameters의 수를 줄일 수 있다. attention에는 4개의 weight $(𝑊_𝑞  , 𝑊_𝑘  , 𝑊_𝑣  , 𝑊_𝑜  )$가 있고 MLP에는 2개가 있다. LoRA에서는 output dimension의 attention head들을 하나의 matrix로 취급하고 attention weights만을 adaptation한다. 
 
+**Practical Benefits**
+frozen parameter에 대한 optimizer state를 저장할 필요없으므로 VRAM 사용량을 최대 2/3까지 줄일 수 있다. 실제로 r = 4를 이용하고 query 및 value projection matrix만 adaptation 하면 checkpoint의 크기를 약 1만배 줄일 수 있다. 이를통해 GPU 필요량을 줄이고 I/O bottleneck(데이터를 읽고 쓰는 속도가 느려서 작업이 막힘)을 피할 수 있다. 또한 적은 비용으로 task간의 전환이 가능하다. 
+
+**Practical Limitations**
+A,B가 task별로 다르기 때문에 여러 task의 input을 하나의 forward pass에서 batch 처리하는것이 어렵다.
 # Empirical Experiments
 
 ## BaseLines
@@ -137,26 +142,102 @@ production  $W_0$와 $BA$는 $\mathbb{R}^{d \times k}$차원이다. 우리가 �
 기존연구에 사용된 설정을 재현한다.  
 간단한 변형으로 finetuning의 일부 layer만 update하고 나머지는 freezing할 수 있는데 GPT-2에서 마지막 두 layer만 adaptation하는 기존 연구 설정을 포함하였다.
 ![](../assets/Pasted%20image%2020260906082555.png)
+
+**Bias-only or BitFit**
+다른건 다 freeze 하고 bias vectors만 학습
+
+**Prefix-embedding tuning**
+input tokens에 special tokens를 넣는다. prefix 또는 infix에 넣는다. 즉
+$|\Theta| = d_{\text{model}} \times (l_p + l_i)$이다.
+
+**Prefix-layer tuning**
+prefix-embedding tuning의 확장으로 모든 transformer layer에 대한 special tokens를 학습한다. 즉 Layer마다 special token이 변화한다. 
+$|\Theta| = L \times d_{\text{model}} \times (l_p + l_i)$
+
+**Adapter tuning**
+| Method | Adapter 위치 | 특징 |
+|---|---|---|
+| AdapterH | Attention 뒤 + MLP 뒤 | original design, adapter 수가 많음|
+| AdapterL | 주로 MLP 뒤 + LayerNorm 이후 | 더 efficient | 
+| AdapterP | AdapterL과 유사한 single-placement design | parameter-efficient |
+| AdapterD | 일부 layer의 adapter 제거 | 계산량과 parameter 추가 감소 |
+
+$|\Theta| = \hat{L}_{\text{Adpt}} \times \left(2 \times d_{\text{model}} \times r + r + d_{\text{model}}\right) + 2 \times \hat{L}_{\text{LN}} \times d_{\text{model}}$
+
+**LoRA**
+trainable rank decomposition matrix를 추가한다. 이떄 $W_q$와 $W_v$만 적용한다. $|\Theta| = 2 \times \hat{L}_{\text{LoRA}} \times d_{\text{model}} \times r$ 
 ## RoBerta Base/Large
 
-RoBerta는 BERT에서 처음 제안된 pre-training recipe을 최적화하여 BERT task 성능을 향상한 모델로 여전히 널리 사용되는 pre-trained model이다. 
-
+RoBerta는 BERT에서 처음 제안된 pre-training recipe을 최적화하여 BERT task 성능을 향상한 모델로 여전히 널리 사용되는 pre-trained model이다. 여기서 base,large 모델을 가져오는데 두가지 변경을 제공했다.
+1. 모든 task에 동일한 batch size를 사용하고 adapter basline을 맞추기 위해 length 128로 설정한다
+2. fine-tuning 과정을 1회로 단축
 ## Deberta XXL
-
+최신 BERT의 변형이다.
 ## GPT-2 Medium/Large
 
+![](../assets/Pasted%20image%2020260909170853.png)
 ## Scaling up to GPT-3 175B
 
-# Related Works
+GPT-3는 training 비용이 높으므로 random seed에 대한 특정 task의 일반적인 표준편차만 보고한다. 
+![](../assets/Pasted%20image%2020260909172544.png)
+trainable parameter를 더 많이 사용한다고 해서 무조건 성능이 상승하지 않는다. 
+또한 prefix-embedding tuning에서 256개 보다 많은 special token을 사용하거나 prefix-layer tuning에서 32개보다 많은 special token을 사용하면 성능이 크게 하락하는 것을 관찰했다. 논문에서는 special token이 많아질수록 input distribution이 pre-training data distribution에서 멀리 이동하기 때문이라고 추측하였다.
+![](../assets/Pasted%20image%2020260909172559.png)
 
 # Understanding the Low-Rank Updates
 
+low-rank 구조는 여러 실험을 병렬로 수행하는 하드웨어 진입 장벽을 낮추고 update weight가 pretrained weight와 어떻게 상관되는지 해석 가능성도 높인다.
+1.  parameter buget(parameter 한도) 제약시에 성능 최대화를 위해 어떠한 weight matrix의 부분집합을 adaptation 해야하는가?
+2. $ΔW$는 실제로 rank-deficient 한가?
+3. $W$와 $ΔW$ 사이에는 어떤 관계가 있는가?
 ## Which weight matrices in Transformer should we apply LoRA To?
 
+논문에서는 self-attention module의 weight matirx만 고려한다.
+![](../assets/Pasted%20image%2020260907141538.png)
+$W_q,W_v$를 모두 adaptation하면 가장 높은 성능을 보인다. 즉 rank 4만 되어도 충분한 정보를 포착하므로 하나의 weight만 높은 rank로 adaptation 하는것보다 더 많은 weight matrix를 adaptation 하는것이 바람직하다. 
 ## What is the optimal Rank r for LoRA?
 
+rank r이 model에 미치는 영향에 주목한다. 
+![](../assets/Pasted%20image%2020260907141529.png)
+매우 작은 r에서도 경쟁력 있는 성능을 달성한다. 이를 통해 $ΔW$가 매우 작은 intrinsic rank를 가질 수 있음을 시사한다.
+이를 더욱 뒷받침하기 위해 서로 다른 r과 random seed로 학습된 subspace overlap을 확인한다. 이때 r을 증가시켜도 더 의미있느네 subspace를 포괄하지 못한다.
+
+**Subspace similarity between different r**
+singular vector가 어떤 공간을 span한다는건 두 벡터를 조합해서 만들 수 있는 벡터의 집합이다. A는 adaptation matrix고 U는 singular value decomposition이다. U에서 상위 i개 singular vector가 span하는 subspace가 어느정도로 겹치는가를 측정한다. 이때 Grassmann distance에 기반한 normalized subspace similarity로 측정한다.
+$$
+\phi(A_{r=8}, A_{r=64}, i, j)
+=
+\frac{
+\left\| U_{A_{r=8}}^{i\top} U_{A_{r=64}}^j \right\|_F^2
+}{
+\min(i,j)
+}
+\in [0,1]
+$$
+1은 subspace가 완전히 overlap되고 0은 완전히 분리됨을 의미한다.
+![](../assets/Pasted%20image%2020260907165928.png)
+$A_{r=8}$과 $A_{r=64}$의 subspace similarity를 $Δ𝑊_q$와 $Δ𝑊_v$에 대해 나타낸것이다. 3번째, 4번째 그림은 1,2번째 그림을 확대한것이다. 이때 상위 singular vector는 상당히 overlap되지만 다른 방향은 그렇지 않다. 실제로 dimension 1에서 normalized similarity > 0.5인 subspace를 공유한다. 
+또한 하위 singular vector들은 random noise로 해석할 수 있다.
+
+**subspace similarity between different random seeds**
+서로 다른 seed의 normalized subspace similarity를 그렸을때 $Δ𝑊_q$는 $Δ𝑊_v$보다 높은 intrinsic rank을 가지는 것으로 보인다.(더 높은 singular value가 겹침)
+![](../assets/Pasted%20image%2020260908160223.png)
 ## How does the Adaptation Matrix $ΔW$ Compare to $W$?
 
+$∆W$가 W와 비교했을때 얼마나 큰지 확인하기 위해서 W를 $∆W$의 r-dimensional subspace에 project한다. 이때 $U^\top W V^\top$를 계산하는데 U는 output 방향의 정보이고 V는 input 방향의 정보이다. 그리고 $\left\| U^\top W V^\top \right\|_F$와 $‖𝑊‖_F$ 를 비교한다. 즉 random r, W, $∆W$를 비교한다.
+![](../assets/Pasted%20image%2020260909151045.png)
+1. $∆W$는 random matrix보다 W와 더 강한 correlation을 가진다. 즉 W에 존재하는 일부 feature을 증폭한다는 것을 의미한다. 
+2. ∆W는 W의 top singular direction을 반복하는 대신 W에서 강조되지 않은 direction만 증폭한다.
+3. Amplification factor가 21.5에 가깝게 매우 크다
+$$
+\text{Amplification factor}
+=
+\frac{
+\Delta W\text{가 선택한 방향에서 }W\text{의 크기}
+}{
+\text{random 방향에서 }W\text{의 크기}
+}
+$$
 # Conclusion and future work
 
 거대한 language model을 fine-tuning하는데 필요한 hardware와 서로 다른 task를 위한 독립적인 instance를 hosting할때 발생하는 storage/switching cost 측면에서 감당하기 어려울 정도로 큰 비용이 든다. 이때 논문에서는 높은 model quality를 유지하며 inference latency를 발생시키지 않고 input sequence length도 줄이지 않는 효율적인 adaptation strategy인 LoRA를 제안한다. model parameter 대부분을 공유하므로 서비스시에 빠르게 task를 전환할 수 있고 dense layer를 포함하는 모든 nn에 일반적으로 적용할 수 있다.

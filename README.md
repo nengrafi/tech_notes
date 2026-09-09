@@ -7,3 +7,14 @@
 - [Paper Summaries](./Paper_summaries/README.md)
 - [Game Development](./Game_development/README.md)
 - [Codyssey](./Codyssey/README.md)
+- [Security](./Security/README.md)
+
+
+---
+### 나의 학습가이드
+
+- 빨간색 : 중요하고 모르는거
+- 초록색 : 중요한거
+- 노란색 : 잠깐 생각해볼만한거
+- 파란색 : 내가 잘 모르지만 중요하지는 않은거
+
