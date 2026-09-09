@@ -2,7 +2,7 @@
 title: "LoRA: Low-Rank Adaptation of Large Language Models"
 field: AI
 category: Efficient Learning
-status: reading
+status: First Pass
 ---
 
 # Abstract
