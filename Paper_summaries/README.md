@@ -8,6 +8,12 @@
 
 ## AI Papers
 
+### Efficient Learning
+
+| Paper | Status |
+|---|---|
+| [LoRA: Low-Rank Adaptation of Large Language Models](LoRA.md) | First Pass |
+
 ### Generative Model
 
 | Paper | Status |
