@@ -2,7 +2,7 @@
 title: "BadNets: Identifying Vulnerabilities in the Machine Learning Model Supply Chain"
 field: AI_Security
 category: Backdoor
-status: reading
+status: First Pass
 ---
 ## Summary
 
