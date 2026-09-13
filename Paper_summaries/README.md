@@ -27,6 +27,7 @@
 | Paper | Status |
 |---|---|
 | [Attention is all you need](Transformer.md) | First Pass |
+| [Training language models to follow instructions  with human feedback](InstructGPT.md) | First Pass |
 
 ## AI_Security Papers
 
