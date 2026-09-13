@@ -37,4 +37,10 @@
 | [Explaining and Harnessing Adversarial Examples](Explaining%20and%20Harnessing%20Adversarial%20Examples.md) | First Pass |
 | [Towards Evaluating the Robustnessof Neural Networks](Towards%20Evaluating%20the%20Robustnessof%20Neural%20Networks.md) | First Pass |
 
+### Backdoor
+
+| Paper | Status |
+|---|---|
+| [BadNets: Identifying Vulnerabilities in the Machine Learning Model Supply Chain](BadNets.md) | First Pass |
+
 <!-- AUTO-PAPER-INDEX:END -->
