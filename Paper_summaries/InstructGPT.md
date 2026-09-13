@@ -2,7 +2,7 @@
 title: Training language models to follow instructions  with human feedback
 field: AI
 category: NLP
-status: reading
+status: First Pass
 ---
 ## Summary
 
