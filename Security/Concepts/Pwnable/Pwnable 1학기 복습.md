@@ -57,12 +57,15 @@ RET : 함수의 실행이 완료되고 다시 프로그램이 실행되는 위�
 #### Register
 
 CPU안의 작은 저장공간
+- 주로 상수값이나 메모리 주소가 저장
 `rax` : 계산 결과, 반환값
 `rbx` : 일반적인 값 저장
 `rcx`,`rdx` : 일반값/함수 인자등에 사용
 `rsp` : 현재 stack의 꼭대기 주소
 `rbp` : 현재 stack frame의 기준 주소
 `rip` : 다음에 실행할 명령어 주소
+
+![](../../../assets/Pasted%20image%2020260915164148.png)
 
 ---
 ## Address
@@ -96,11 +99,12 @@ index의 범위를 제한하면 보안가능
 
 `gets()` : 입력길이 검사를 하지않는 input 함수
 
+- overflow가 가능한 writable buffer가 있어야한다
+- buffer를 초과해서 쓸 수 있어야한다
+- SHSTK(RET를 일반 stack과 별도의 shadow stack에 보관)이 없어야한다.
+- 쉘창을 실행시키는 명령어가 포함된 함수가 필요하다
+
 endbr64가 있으면 터짐
-
-p32
-
-r.interactive()
 
 ## BOF 보호기법
 
@@ -130,13 +134,145 @@ main -> PLT -> GOT
 프로그램 실행 -> 공유 라이브러리 로딩 -> dynamic linker -> GOT Table 기록 -> GOT write 권한 제거
 #### NX
 
+허가 받지 않은 메모리에서 명령어 실행을 금지함
+- BSS,data,heap,stack
 #### Stack
 
+buffer와 SFP 사이에 랜덤한 값을 넣고 이 값이 변하지 않았는지 확인합니다. 만약에 변화하였다면 process를 즉시 종료합니다. 이때 변수를 canary라고 합니다.
+![](../../../assets/Pasted%20image%2020260915103352.png)
+![](../../../assets/Pasted%20image%2020260915092750.png)
 
-# R2B 보호기법
+**Canary**
+- 32-bit에서는 4bytes, 64-bit에서는 8bytes를 가집니다.
+- 첫 byte는 NULL byte이고 little endian으로 바꿨을때는 \x00이다.
+- 일반적으로 overflow가 시작되는 변수는 char형태의 배열인데 이때 NULL byte을 문자열의 끝으로본다.
+- NULL byte를 붙임으로서 leak를 막습니다.
+- 첫 byte를 제외한 나머지 bytes는 전부 random입니다.
+
+![](../../../assets/Pasted%20image%2020260915110218.png)
+
+**Canary 우회 기법**
+
+![](../../../assets/Pasted%20image%2020260915111303.png)
+
+- v3에 저장된 값을 leak하기 위해서 105byte를 buf에 입력한다.
+- printf를 통해 나머지 랜덤한 7byte를 출력한다.
+- 이제 v3에 canary를 넣어주고 BOF를 사용하여 exploit한다.
+- 이때 canary leak가 가능해야하고 leak 이후에 payload가 가능해야하며 BOF로 RET까지 덮을 수 있어야한다.
+# R2B 
+
+쉘창을 실행시키는 명령어가 포함된 함수가 필요없음
+
+- buf에 little-endian식으로 표현된 쉘코드를 입력
+- RET 전까지 dummy data를 나열하고 buf의 stack 주소를 RET 주소에 입력
+
+**R2B 보호기법**
+
+- SHSTK 기능이 없어야한다
+- overflow가 가능한 변수여야함
+- NX를 사용
+---
+## Assembly language
+
+![](../../../assets/Pasted%20image%2020260915164312.png)
+
+- mov에서 그냥은 주소, []는 실제값
+- cmp 명령어와 jmp 명령어는 같이 쓰입니다.
+
+![](../../../assets/Pasted%20image%2020260915165447.png)
+
+- int 0x80 = 32-bit, syscall = 64-bit
+- C언어 -> assembly language 사이트 : "https://godbolt.org/"
+
+### 호출 규약
 
 
-쉘코드모음
+![](../../../assets/Pasted%20image%2020260915171225.png)
 
+cleans stack : 함수 호출후 인자를 정리하는 곳
+- caller : 호출한 함수
+- callee : 호출당한 함수
+Arguments : 인자를 넣는곳
+Arg Ordering : 인자를 넘기는 순서
+#### Cdecl
+- 32bit에 사용
+- sum(1,2)
+```Assembly
+push 2
+push 1
+call sum
+add esp 8 //stack 정리
+```
+- write(1,"Hello world",12);
+```Assembly
+push 0xc
+push 0x045F
+push 0x1
+call write
+add esp, 0xc
+```
+#### Fastcall
+- 64bit에 사용
+- register에 우선 저장하고 부족하면 stack 이용
+- 인자 저장 순서
+```Assembly
+rdi
+rsi
+rdx
+rcx
+```
+- sum(1,2)
+```Assembly
+mov rdi, 1
+mov rsi, 2
+call sum
+```
+- write(1,"Hello world",12); (?)
+```Assembly
+mov rdi,1
+mov rsi,0x045F
+mov rdx,0xC
+call write
+```
 
+### 시스템콜
 
+사용자 프로그램이 kernel에게 요청을 보내는일
+
+https://rninche01.tistory.com/entry/Linux-system-call-table-%EC%A0%95%EB%A6%ACx86-x64 : 리눅스 system call table 정리
+#### Standard File Descriptor = stdout
+0 : stdin = 표준입력
+1 : stdout = 표준출력
+2 : stderr = 표준에러출력
+
+```Assembly
+mov rax, 1 ;sys_write
+mov rdi, 1 ;stdout
+mov rsi, msg ;buffer address
+mov rdx, 11 ;length
+syscall ;system call
+```
+
+### shell창 열기
+
+- c언어
+```C
+execv("/bin/sh,0,0)
+```
+
+- 32bit
+```Assembly
+mov eax, 11
+mov ebx, msg
+mov ecx, 0
+mov edx, 0
+int 0x80
+```
+- 64bit
+```Assembly
+mov rax, 59
+mov rdi, msg
+mov rsi, 0
+mov rdx, 0
+syscall
+```
