@@ -43,5 +43,6 @@
 | Paper | Status |
 |---|---|
 | [BadNets: Identifying Vulnerabilities in the Machine Learning Model Supply Chain](BadNets.md) | First Pass |
+| [Neural Cleanse: Identifying and Mitigating  Backdoor Attacks in Neural Networks](Neural%20Cleanse.md) | First Pass |
 
 <!-- AUTO-PAPER-INDEX:END -->
