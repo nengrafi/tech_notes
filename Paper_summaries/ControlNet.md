@@ -1,7 +1,7 @@
 ---
-title:
-field:
-category:
+title: Adding Conditional Control to Text-to-Image Diffusion Models
+field: AI
+category: Generative Model
 status: reading
 ---
 ## Summary
