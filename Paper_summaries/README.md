@@ -18,7 +18,9 @@
 
 | Paper | Status |
 |---|---|
+| [Adding Conditional Control to Text-to-Image Diffusion Models](ControlNet.md) | First Pass |
 | [DreamBooth: Fine Tuning Text‑to‑Image Diffusion Models for Subject‑Driven Generation](DreamBooth.md) | First Pass |
+| [Effective Whole-body Pose Estimation with Two-stages Distillation](Dwpose.md) | First Pass |
 | [High‑Resolution Image Synthesis with Latent Diffusion Models](LDM.md) | First Pass |
 | [SDXL: Improving Latent Diffusion Models for High‑Resolution Image Synthesis](SDXL.md) | First Pass |
 
