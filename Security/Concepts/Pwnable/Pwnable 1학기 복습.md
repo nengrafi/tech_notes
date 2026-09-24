@@ -118,18 +118,6 @@ endbr64가 있으면 터짐
 
 dynamic linking 작업이 끝난뒤 GOT에 write 권한을 제거하여 GOT table을 수정하지 못하게 한다.
 
-ASLR: 프로그램 시작시 stack,lib address를 랜덤하게 바뀌게한다
-dynamic linker : 실행시점에 공유 라이브러리를 연결하고  외부 함수가 실제로 메모리 어디에 위치하는지 찾아준다
-PLT : 외부 함수를 호출할 때 거쳐가는 중간 코드
-GOT : 외부함수나 전역객체의 실제 address를 저장하는 table
-lazy binding : 실제로 처음 호출할때 함수 address를 찾음
-
-**함수 첫번째 호출**
-main -> PLT -> GOT -> dynamic linker -> libc -> dynamic linker가 GOT 수정
-
-**함수 두번째 호출**
-main -> PLT -> GOT
-
 **Full RELRO**
 프로그램 실행 -> 공유 라이브러리 로딩 -> dynamic linker -> GOT Table 기록 -> GOT write 권한 제거
 #### NX
@@ -276,3 +264,74 @@ mov rsi, 0
 mov rdx, 0
 syscall
 ```
+---
+# RTL
+
+스택 버퍼 오버플로우로 RET 주소를 덮어서 원래 프로그램 흐름 대신 libc에 이미 존재하는 함수를 실행시키는 기법입니다.
+## dynamic linking과 공유 libarary(PLT-GOT table)
+
+Static linking : 실행파일에 모든 library code가 있음
+Dynamic linking : 외부 라이브러리에서 필요한 함수를 참조
+
+ASLR: 프로그램 시작시 stack,lib address를 랜덤하게 바뀌게한다
+dynamic linker : 실행시점에 공유 라이브러리를 연결하고 외부 함수가 실제로 메모리 어디에 위치하는지 찾아준다
+PLT : GOT에 저장된 주소를 참조하여 GOT에 저장된 주소로 $jmp$하라는 명령어가 저장되어 있음
+GOT : 외부함수나 전역객체의 실제 address를 저장하는 table
+lazy binding : 실제로 처음 호출할때 함수 address를 찾음
+
+**함수 첫번째 호출**
+main -> PLT -> GOT -> dynamic linker -> libc -> dynamic linker가 GOT 수정
+
+**함수 두번째 호출**
+main -> PLT -> GOT
+
+![](../../../assets/Pasted%20image%2020260922182033.png)
+컴파일할때 필요한 외부함수들을 입력해두고 Linking할때 PLT와 GOT가 생성됨
+
+```C
+#include <stdio.h>
+#include<unistd.h>
+
+int main(){
+	char buf[100];
+	
+	read(0,buf,0x100);
+	write(1,buf,0x100);
+	return 0;
+}
+```
+
+```C
+#include <stdio.h>
+#include<unistd.h>
+
+char gift[] = "/bin/sh";
+
+int main(){
+	system("clear")
+	write(1,"anything: ",10);
+	read(0,buf,0x100);
+	return 0;
+}
+```
+### 32Bit
+![](../../../assets/Pasted%20image%2020260922183228.png)
+![](../../../assets/Pasted%20image%2020260923003147.png)
+### 64Bit
+
+- 64bit는 매개변수를 stack에 저장하지 않고 register에 저장함
+![](../../../assets/Pasted%20image%2020260922183427.png)
+
+```
+RDI : 0x0 
+RSI : buf_address
+RDX : 0x100$
+```
+## Gadget 사용법
+
+Assembly 명령어 조각들
+
+즉 명령어들의 address를 사용함
+
+`ROPgadget --binary {파일이름} | grep {찾고 싶은 명령어}`
+
